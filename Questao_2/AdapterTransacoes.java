@@ -3,8 +3,7 @@ package Questao_2;
 import java.util.HashMap;
 
 public class AdapterTransacoes implements ProcessadorTransacoes {
-
-    private final SistemaBancarioLegado sistemaLegado;
+    private SistemaBancarioLegado sistemaLegado;
 
     public AdapterTransacoes(SistemaBancarioLegado sistemaLegado) {
         this.sistemaLegado = sistemaLegado;
@@ -13,23 +12,37 @@ public class AdapterTransacoes implements ProcessadorTransacoes {
     @Override
     public TransacaoResposta autorizar(String cartao, double valor, String moeda) {
         HashMap<String, Object> parametros = new HashMap<>();
-        parametros.put("cartao", cartao);
-        parametros.put("valor", valor);
-        parametros.put("moeda", moeda);
+        parametros.put("numeroCartao", cartao);
+        parametros.put("valorTransacao", valor);
 
-        parametros.put("codigoBanco", "001");
+        int codigoMoeda = converterMoedaParaCodigo(moeda);
+        parametros.put("codigoMoeda", codigoMoeda);
+
+        parametros.put("codigoBanco", "237");
 
         HashMap<String, Object> respostaLegado = sistemaLegado.processarTransacao(parametros);
 
-        return converterRespostaLegado(respostaLegado);
+        return new TransacaoResposta(
+            (String) respostaLegado.get("status"),
+            (String) respostaLegado.get("codigoAutorizacao"),
+            (String) respostaLegado.get("mensagem")
+        );
     }
 
-    private TransacaoResposta converterRespostaLegado(HashMap<String, Object> respostaLegado) {
-        String status = (String) respostaLegado.getOrDefault("status", "DESCONHECIDO");
-        String codigoAutorizacao = (String) respostaLegado.getOrDefault("codigoAutorizacao", null);
-        String mensagem = (String) respostaLegado.getOrDefault("mensagem", "Sem mensagem");
-        String motivo = (String) respostaLegado.getOrDefault("motivo", null);
+    private int converterMoedaParaCodigo(String moeda) {
+        if (moeda == null) {
+            return 0;
+        }
 
-        return new TransacaoResposta(status, codigoAutorizacao, mensagem, motivo);
+        switch (moeda.toUpperCase()) {
+            case "USD":
+                return 1;
+            case "EUR":
+                return 2;
+            case "BRL":
+                return 3;
+            default:
+                return 0;
     }
+}
 }
